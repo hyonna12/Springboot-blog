@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 @Controller
 public class BoardsController {
 
-	@GetMapping("/boards")
+	@GetMapping({"/","/boards"})	// 두개 넣기
 	public String getBoardList() {
 		return "boards/main";
 	}
@@ -21,4 +21,7 @@ public class BoardsController {
 	public String writeForm() {
 		return "boards/writeForm";
 	}
+	
+//	@PostMapping("/boards/{id}/delete")
+//	@PostMapping("/boards/{id}/update")
 }

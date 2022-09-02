@@ -2,18 +2,17 @@
 	pageEncoding="UTF-8"%>
 
 <%@ include file="../layout/header.jsp"%>
-
 <div class="container">
-	<form>
+	<form action="/join" method="post">	<!-- 다 완료하면 post의 /join 주소로 감 -->
 		<div class="mb-3 mt-3">
-			<input type="text" class="form-control" placeholder="Enter username">
+			<input type="text" class="form-control" placeholder="Enter username" name="username">
 		</div>
 		<div class="mb-3">
 			<input type="password" class="form-control"
-				placeholder="Enter password">
+				placeholder="Enter password" name="password">
 		</div>
 		<div class="mb-3">
-			<input type="email" class="form-control" placeholder="Enter email">
+			<input type="email" class="form-control" placeholder="Enter email" name="email">
 		</div>
 		<button type="submit" class="btn btn-primary">회원가입</button>
 	</form>
