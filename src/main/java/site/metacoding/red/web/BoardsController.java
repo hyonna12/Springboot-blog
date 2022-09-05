@@ -58,9 +58,13 @@ public class BoardsController {
 		// toentity() 메서드를 만들어놓고 entity로 변환하는 게 편함
 	}
 	
+	// http://localhost:8000/		// main은 /, page의 디폴트 값을 0으로 해줘야함
+	// http://localhost:8000/?page=0
 	@GetMapping({"/","/boards"})	// 두개 넣기
-	public String getBoardList(Model model) {
-		List<MainDto> boardsList = boardsDao.findAll();	// 전체 데이터
+	public String getBoardList(Model model, Integer page) {	// pk가 아니면 다 쿼리스트링으로 받기 / 0->0, 1->10, 2->20 페이지 받아서 startNum만들기
+		if(page == null) page = 0;
+		int startNum = page * 10;
+		List<MainDto> boardsList = boardsDao.findAll(startNum);	// 전체 데이터
 		model.addAttribute("boardsList", boardsList);
 		return "boards/main";
 	}
