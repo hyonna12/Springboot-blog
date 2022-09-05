@@ -10,11 +10,14 @@
 	</insert>
 
 	<select id="findById" resultType="site.metacoding.red.domain.boards.Boards">
-	
 	</select>
 	
-	<select id="findAll" resultType="site.metacoding.red.domain.boards.Boards">
-		
+	<select id="findAll" resultType="site.metacoding.red.web.dto.response.boards.MainDto">
+		SELECT b.id, b.title, u.username	<!-- 이 데이터들을 담아줄 mapper 필요함 -->
+		FROM boards b
+		INNER JOIN users u
+		ON b.usersId = u.id
+		ORDER BY b.id DESC
 	</select>
 	
 	<update id="update">

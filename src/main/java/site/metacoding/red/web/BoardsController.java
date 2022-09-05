@@ -1,17 +1,20 @@
 package site.metacoding.red.web;
 
+import java.util.List;
+
 import javax.servlet.http.HttpSession;
 
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 
 import lombok.RequiredArgsConstructor;
-import site.metacoding.red.domain.boards.Boards;
 import site.metacoding.red.domain.boards.BoardsDao;
 import site.metacoding.red.domain.users.Users;
 import site.metacoding.red.web.dto.request.boards.WriteDto;
+import site.metacoding.red.web.dto.response.boards.MainDto;
 
 @RequiredArgsConstructor
 @Controller
@@ -39,7 +42,6 @@ public class BoardsController {
 		// 조건 : dto를 entity로 변환해서 인수로 담아준다.
 		// 조건 : entity에는 세션의 principal에 getId가 필요하다.
 	
-		//boardsDao.insert(writeDto.toEntity(principal.getId()));
 		// boards 테이블에 insert요청들어옴
 		// writeDto 는 글쓰기할때 필요한 값을 받음
 		// 두개 값을 받아서 insert하는데 session값으로 인증됐는지 먼저 확인
@@ -57,7 +59,9 @@ public class BoardsController {
 	}
 	
 	@GetMapping({"/","/boards"})	// 두개 넣기
-	public String getBoardList() {
+	public String getBoardList(Model model) {
+		List<MainDto> boardsList = boardsDao.findAll();	// 전체 데이터
+		model.addAttribute("boardsList", boardsList);
 		return "boards/main";
 	}
 	
