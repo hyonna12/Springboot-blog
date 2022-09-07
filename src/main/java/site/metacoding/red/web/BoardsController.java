@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 
 import lombok.RequiredArgsConstructor;
+import site.metacoding.red.domain.boards.Boards;
 import site.metacoding.red.domain.boards.BoardsDao;
 import site.metacoding.red.domain.users.Users;
 import site.metacoding.red.web.dto.request.boards.WriteDto;
@@ -27,6 +28,35 @@ public class BoardsController {
 	// session을 DI, dependency injection 생성자 주입 해야함
 	private final BoardsDao boardsDao;
 	// BoardsDao DI
+	
+	@PostMapping("/boards/{id}/delete")
+	public String deleteBoards(@PathVariable Integer id) {	// pk니까 pathvariable로 받기/pk아닌건 쿼리스트링으로
+		// 영속화하는건 select해서 있는지 확인해보는거
+		// 무조건 delete하는것보다 영속화해서 조건에 따라서 delete를 하는게 유리
+		// 트랜잭션때문에 하나 안되면 계속 대기해야하기 때문에
+		// 먼저 영속화해야함
+		Boards boardsPS = boardsDao.findById(id);
+		Users principal = (Users) session.getAttribute("principal");
+		
+		// 비정상 요청 체크
+		if(boardsPS == null) {	// if는 비정상 로직을 타게해서 걸러내는 필터 역할을 하는게 좋다. /영속화가 안되면 쫓아내는 코드, 절대 null이 나올수없게
+			return "redirect:/boards/"+id; 	// 삭제버튼 클릭했을 때 없으면 상세보기로 리턴
+		}
+		
+		// 인증 체크
+		if(principal == null) {
+			return "redirect:/loginForm";
+		}
+		
+		// 권한 체크 (세션 principal.getId()와 boardsPS의 userId를 비교) / 게시글 쓴 user의 id와 현재 id를 비교
+		if(principal.getId() != boardsPS.getUsersId()) {
+			return "redirect:/boards/"+id;
+		}
+		
+		boardsDao.delete(id);
+		return "redirect:/";
+		
+	}
 	
 	@PostMapping("/boards")
 	public String writeBoard(WriteDto writeDto) {	// 메서드 안에 들어갈 dto 만들어야함/title, content 두개만 들어갈 dto
@@ -69,29 +99,16 @@ public class BoardsController {
 		List<MainDto> boardsList = boardsDao.findAll(startNum);	// 전체 데이터
 		PagingDto paging = boardsDao.paging(page);
 		
-		// 2. 수정함
-		final int blockCount = 5;
-		
-		int currentBlock = page / blockCount;
-		int startPageNum = 1 + blockCount*currentBlock;
-		int lastPageNum = 5 + blockCount*currentBlock;
-			
-		if(paging.getTotalPage() < lastPageNum) {
-			lastPageNum = paging.getTotalPage();
-		}
-		
-		paging.setBlockCount(blockCount);
-		paging.setCurrentBlock(currentBlock);
-		paging.setStartPageNum(startPageNum);
-		paging.setLastPageNum(lastPageNum);
+		paging.makeBlockInfo();
 		
 		model.addAttribute("boardsList", boardsList);
 		model.addAttribute("paging", paging);
+		
 		return "boards/main";
 	}
 	
 	@GetMapping("/boards/{id}")
-	public String getBoardList(@PathVariable Integer id, Model model) {
+	public String getBoardDetail(@PathVariable Integer id, Model model) {
 		model.addAttribute("boards", boardsDao.findById(id));
 		return "boards/detail";
 	}

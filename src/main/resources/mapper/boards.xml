@@ -24,7 +24,7 @@
 	</insert>
 
 	<select id="findById" resultType="site.metacoding.red.domain.boards.Boards">
-		SELECT title, content FROM boards WHERE id=#{id}
+		SELECT id, title, content, usersId, createdAt FROM boards WHERE id=#{id}
 	</select>
 	
 	<select id="findAll" resultType="site.metacoding.red.web.dto.response.boards.MainDto">
@@ -42,7 +42,7 @@
 	</update>
 	
 	<delete id="delete">
-	
+		DELETE FROM boards WHERE id = #{id}
 	</delete>
 
 </mapper>

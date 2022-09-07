@@ -16,4 +16,16 @@ public class PagingDto {
 	private boolean isLast;	// false/ false/ true
 	private boolean isFirst;	// true/ false/ false
 	// getter가 만들어지면 isLast() 이름으로 만들어짐. -> el에서는 last로 찾음
+	
+	public void makeBlockInfo() {
+		this.blockCount = 5;
+		
+		this.currentBlock = currentPage / blockCount;
+		this.startPageNum = 1 + blockCount*currentBlock;
+		this.lastPageNum = 5 + blockCount*currentBlock;
+			
+		if(totalPage < lastPageNum) {
+			this.lastPageNum = totalPage;
+		}
+	}
 }
