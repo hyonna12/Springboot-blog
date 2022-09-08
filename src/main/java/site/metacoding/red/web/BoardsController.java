@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import site.metacoding.red.domain.boards.Boards;
 import site.metacoding.red.domain.boards.BoardsDao;
 import site.metacoding.red.domain.users.Users;
+import site.metacoding.red.web.dto.request.boards.UpdateDto;
 import site.metacoding.red.web.dto.request.boards.WriteDto;
 import site.metacoding.red.web.dto.response.boards.MainDto;
 import site.metacoding.red.web.dto.response.boards.PagingDto;
@@ -29,6 +30,60 @@ public class BoardsController {
 	private final BoardsDao boardsDao;
 	// BoardsDao DI
 	
+	@PostMapping("/boards/{id}/update")	// 업데이트만 toentity안쓰고 영속화, 변경, 수행으로 
+	public String updateForm(@PathVariable Integer id, UpdateDto updateDto) {
+		// 1. 영속화
+		Boards boardsPS = boardsDao.findById(id);
+		Users principal = (Users) session.getAttribute("principal");
+		// 비정상 요청 체크
+		if(boardsPS == null) {
+			return "errors/badpage";
+		}
+		
+		// 인증 체크
+		if(principal == null) {	
+			return "redirect:/loginForm";
+		}
+		
+		// 권한 체크 (세션 principal.getId()와 boardsPS의 userId를 비교) / 게시글 쓴 user의 id와 현재 id를 비교
+		if(principal.getId() != boardsPS.getUsersId()) {
+			return "errors/badpage";
+		}
+		
+		// 2. 변경
+		boardsPS.글수정(updateDto);
+		
+		// 3. 수행
+		boardsDao.update(boardsPS);
+		//boardsDao.update(updateDto.toEntity(id));
+		return "redirect:/boards/" + id;
+	}
+	
+	@GetMapping("/boards/{id}/updateForm")
+	public String updateForm(@PathVariable Integer id, Model model) {
+		Boards boardsPS = boardsDao.findById(id);
+		Users principal = (Users) session.getAttribute("principal");
+		
+		// 비정상 요청 체크
+		if(boardsPS == null) {
+			return "errors/badpage";
+		}
+		
+		// 인증 체크
+		if(principal == null) {	
+			return "redirect:/loginForm";
+		}
+		
+		// 권한 체크 (세션 principal.getId()와 boardsPS의 userId를 비교) / 게시글 쓴 user의 id와 현재 id를 비교
+		if(principal.getId() != boardsPS.getUsersId()) {
+			return "errors/badpage";
+		}
+		
+		// 모델에 담아서 이동
+		model.addAttribute("boards", boardsPS);	
+		return "boards/updateForm";
+	}
+	
 	@PostMapping("/boards/{id}/delete")
 	public String deleteBoards(@PathVariable Integer id) {	// pk니까 pathvariable로 받기/pk아닌건 쿼리스트링으로
 		// 영속화하는건 select해서 있는지 확인해보는거
@@ -40,7 +95,7 @@ public class BoardsController {
 		
 		// 비정상 요청 체크
 		if(boardsPS == null) {	// if는 비정상 로직을 타게해서 걸러내는 필터 역할을 하는게 좋다. /영속화가 안되면 쫓아내는 코드, 절대 null이 나올수없게
-			return "redirect:/boards/"+id; 	// 삭제버튼 클릭했을 때 없으면 상세보기로 리턴
+			return "errors/badpage"; 	// 삭제버튼 클릭했을 때 없으면 상세보기로 리턴
 		}
 		
 		// 인증 체크
@@ -53,7 +108,7 @@ public class BoardsController {
 			return "redirect:/boards/"+id;
 		}
 		
-		boardsDao.delete(id);
+		boardsDao.delete(id);	// 핵심 로직
 		return "redirect:/";
 		
 	}
@@ -89,20 +144,34 @@ public class BoardsController {
 		// toentity() 메서드를 만들어놓고 entity로 변환하는 게 편함
 	}
 	
+	// main.jsp에서 주소로 요청하면 여기서 받음
 	// http://localhost:8000/		// main은 /, page의 디폴트 값을 0으로 해줘야함
 	// http://localhost:8000/?page=0
+	// 1번째 ?page=0&keyword=스프링
 	@GetMapping({"/","/boards"})	// 두개 넣기
-	public String getBoardList(Model model, Integer page) {	// pk가 아니면 다 쿼리스트링으로 받기 / 0->0, 1->10, 2->20 페이지 받아서 startNum만들기
-		if(page == null) page = 0;
+	public String getBoardList(Model model, Integer page, String keyword) {	// pk가 아니면 다 쿼리스트링으로 받기 / 0->0, 1->10, 2->20 페이지 받아서 startNum만들기
+		System.out.println("dddddddddd : keyword : "+keyword);
+		if(page == null) {
+			page = 0;
+		}
 		int startNum = page * 3;	// 1. 수정함
 		
-		List<MainDto> boardsList = boardsDao.findAll(startNum);	// 전체 데이터
-		PagingDto paging = boardsDao.paging(page);
-		
-		paging.makeBlockInfo();
-		
-		model.addAttribute("boardsList", boardsList);
-		model.addAttribute("paging", paging);
+		if(keyword == null || keyword.isEmpty()) {		// keyword가 null이면 서치안하고 일반적인 로직 타면되고 keyword있으면 서치
+			System.out.println("=================================");
+			List<MainDto> boardsList = boardsDao.findAll(startNum);	// 전체 데이터
+			PagingDto paging = boardsDao.paging(page, null);
+			paging.makeBlockInfo(keyword);
+			
+			model.addAttribute("boardsList", boardsList);
+			model.addAttribute("paging", paging);
+		} else {
+			List<MainDto> boardsList = boardsDao.findSearch(startNum, keyword);	// 전체 데이터
+			PagingDto paging = boardsDao.paging(page, keyword);
+			paging.makeBlockInfo(keyword);
+			
+			model.addAttribute("boardsList", boardsList);
+			model.addAttribute("paging", paging);
+		}
 		
 		return "boards/main";
 	}

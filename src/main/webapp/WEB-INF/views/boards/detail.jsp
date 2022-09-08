@@ -8,9 +8,8 @@
 	
 	<c:if test="${principal.id == boards.usersId}">	<%-- 사용자의 id와 게시글을 쓴 id가 같아야 수정, 삭제가능 --%>
 		<div class="d-flex">
-			<form>
-				<button class="btn btn-warning">수정하러가기</button>
-			</form>
+			
+			<a href="/boards/${boards.id}/updateForm" class="btn btn-warning">수정하러가기</button></a>
 			
 			<form action="/boards/${boards.id}/delete" method="post">
 				<button class="btn btn-danger">삭제</button>
